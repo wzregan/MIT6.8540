@@ -165,6 +165,7 @@ func (c *Coordinator) do(task Task) {
 	err := c.WorkersStateMap[task.slave].Client.Call("Slave.Process", &req, &res)
 
 	if err != nil {
+
 		log.Printf("任务执行失败，将重新加入队列中，失败原因:%s", err.Error())
 		task.Task_state = TASK_WAITING
 		task.slave = ""
@@ -277,12 +278,16 @@ func (c *Coordinator) Server() {
 		slave.Ticket = 0
 		slave.State = 2
 		go rpc.DefaultServer.ServeConn(client_conn)
-		slave_client, err := rpc.Dial("tcp", fmt.Sprintf("%s:%s", strings.Split(slave.Addr, ":")[0], p2p_port[:len(p2p_port)-1]))
+		rpc.Dial("tcp", fmt.Sprintf("%s:%s", strings.Split(slave.Addr, ":")[0], p2p_port[:len(p2p_port)-1]))
+
+		slave_net_client, err := net.DialTimeout("tcp", fmt.Sprintf("%s:%s", strings.Split(slave.Addr, ":")[0], p2p_port[:len(p2p_port)-1]), time.Second*10)
+
 		if err != nil {
 			log.Println("master连接slave失败")
 			continue
 		} else {
 			log.Printf("master连接slave成功")
+			slave_client := rpc.NewClient(slave_net_client)
 			slave.Client = slave_client
 			slave.State = 0
 			c.WorkersStateMap[slave.Addr] = &slave

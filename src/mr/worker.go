@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"plugin"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -163,7 +164,9 @@ func (s *Slave) DoMap(input_file string) ([]string, bool) {
 }
 
 func (s *Slave) DoReduce(input_files []string) (string, bool) {
-
+	if len(input_files) == 0 {
+		return "", true
+	}
 	kvs := ReduceReader(input_files)
 	log.Printf("共输入了%d个key", len(kvs))
 	ret := []KeyValue{}
@@ -171,7 +174,7 @@ func (s *Slave) DoReduce(input_files []string) (string, bool) {
 		output := s.ReduceFunc(key, values)
 		ret = append(ret, KeyValue{key, output})
 	}
-	id := ihash(ret[0].Key) % s.Nreduce
+	id, _ := strconv.Atoi(strings.Split(filepath.Base(input_files[0]), "_")[0])
 	save_file := fmt.Sprintf("./mr-out-%d", id)
 	file, err := os.Create(save_file)
 	if err != nil {
