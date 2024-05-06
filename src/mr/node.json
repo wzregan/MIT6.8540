@@ -1,0 +1,9 @@
+{
+    "Nodes":[
+        {
+            "node_name":"www.native.map.1",
+            "host":"localhost",
+            "port":8081
+        }
+    ]
+}
